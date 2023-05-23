@@ -1,0 +1,19 @@
+[package]
+name = "fastcpy"
+description = "Fast slice copy for short slices"
+version = "0.1.0"
+edition = "2021"
+homepage = "https://github.com/pseitz/fastcpy"
+repository = "https://github.com/pseitz/fastcpy"
+readme = "README.md"
+license = "MIT"
+include = ["src/**/*.rs", "src/benches/**/*.rs", "README.md"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+
+[dev-dependencies]
+paste = "1.0.12"
+proptest = "1.1.0"
+
