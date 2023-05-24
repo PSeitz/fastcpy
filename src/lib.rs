@@ -11,11 +11,11 @@
 //! ## Double Copy Trick
 //! `fastcpy` employs a double copy trick to copy slices of length 4-32bytes (64bytes with `avx`).
 //! E.g. Slice of length 6 can be copied with two uncoditional copy operations.
-//! ```
+//!
 //! /// [1, 2, 3, 4, 5, 6]
 //! /// [1, 2, 3, 4]
 //! ///       [3, 4, 5, 6]
-//! ```
+//!
 
 #[inline]
 pub fn slice_copy(src: &[u8], dst: &mut [u8]) {
@@ -37,8 +37,14 @@ pub fn slice_copy(src: &[u8], dst: &mut [u8]) {
     if src.is_empty() {
         return;
     }
-    if len < 8 {
+
+    if len < 4 {
         short_copy(src, dst);
+        return;
+    }
+
+    if len < 8 {
+        double_copy_trick::<4>(src, dst);
         return;
     }
 
@@ -71,41 +77,24 @@ pub fn slice_copy(src: &[u8], dst: &mut [u8]) {
     }
 }
 
-#[inline]
+#[inline(always)]
 fn short_copy(src: &[u8], dst: &mut [u8]) {
     let len = src.len();
 
-    if len >= 4 {
-        double_copy_trick::<4>(src, dst);
-    } else {
-        // length 1-3
-        let l_begin = src.as_ptr();
-        let r_begin = dst.as_mut_ptr();
-        unsafe {
-            *r_begin = *l_begin;
-        }
-        if len >= 2 {
-            double_copy_trick::<2>(src, dst);
-        }
+    // length 1-3
+    dst[0] = src[0];
+    if len >= 2 {
+        double_copy_trick::<2>(src, dst);
     }
 }
 
-#[inline]
+#[inline(always)]
 /// [1, 2, 3, 4, 5, 6]
 /// [1, 2, 3, 4]
 ///       [3, 4, 5, 6]
 fn double_copy_trick<const SIZE: usize>(src: &[u8], dst: &mut [u8]) {
-    let len = src.len();
-    let l_begin = src.as_ptr();
-    let r_begin = dst.as_mut_ptr();
-
-    let l_end = unsafe { src.as_ptr().add(len - SIZE) };
-    let r_end = unsafe { dst.as_mut_ptr().add(len - SIZE) };
-
-    unsafe {
-        core::ptr::copy_nonoverlapping(l_begin, r_begin, SIZE);
-        core::ptr::copy_nonoverlapping(l_end, r_end, SIZE);
-    }
+    dst[0..SIZE].copy_from_slice(&src[0..SIZE]);
+    dst[src.len() - SIZE..].copy_from_slice(&src[src.len() - SIZE..]);
 }
 
 #[cfg(test)]

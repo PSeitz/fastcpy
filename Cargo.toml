@@ -17,3 +17,10 @@ include = ["src/**/*.rs", "src/benches/**/*.rs", "README.md"]
 paste = "1.0.12"
 proptest = "1.1.0"
 
+[profile.release]
+codegen-units = 1
+debug = true
+lto = true
+opt-level = 3
+panic = "unwind"
+
